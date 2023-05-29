@@ -1,0 +1,107 @@
+#include <LiquidCrystal.h>
+#include <TinyGPS.h>
+LiquidCrystal lcd(2, 3, 4, 5, 6, 7);
+
+const int relay_Pin = 8;
+const int vibration_Sensor = 9;
+const int switch_Pin = 10;
+
+TinyGPS gps;
+long lat,lon;
+bool switch_status = LOW;
+bool vibration_Status = LOW;
+int timer = 0u;
+void setup() {
+  pinMode(relay_Pin, OUTPUT);
+  pinMode(switch_Pin, INPUT);
+  pinMode(vibration_Sensor, INPUT);
+  Serial.begin(9600);
+  lcd.begin(16, 2);
+  lcd.print("ACCIDENT ");
+  lcd.setCursor(0,1);
+  lcd.print("DETECTION SYSTEM");
+  delay(500); 
+}
+void loop() 
+{
+  lcd.clear();
+  lcd.print("Vehicle Started");
+  delay(500);     
+  digitalWrite(relay_Pin, HIGH); 
+  delay(100);
+   vibration_Status = digitalRead(vibration_Sensor);
+   delay(100);   
+   if(vibration_Status == HIGH)
+    {
+      digitalWrite(relay_Pin, LOW); 
+      delay(100);
+     lcd.clear();
+     lcd.print("Accident Detected");
+     lcd.setCursor(0,1);
+     lcd.print("wait switch input ");
+     delay(500); 
+     lcd.clear(); 
+     lcd.print("Timer Start");
+     do
+     {  
+     lcd.setCursor(0,2);
+     lcd.print(timer = millis() / 1000); 
+     
+     }while(timer < 3);
+     timer = 0;
+     switch_status = digitalRead(switch_Pin);
+     delay(100);
+     if(switch_status == LOW)
+     {
+       lcd.clear();
+       lcd.print("Sending Message");
+       delay(500); 
+       Serial.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
+       delay(100);  // Delay of 1000 milli seconds or 1 second
+       Serial.println("AT+CMGS=\"+919922512017\"\r"); // Replace x with mobile number
+       delay(100);
+       Serial.println("Accident Detected ");// The SMS text you want to send
+       Serial.println("please check location");// The SMS text you want to send
+       while(1)
+       {
+        gps_read();
+       }
+     }
+     else
+     {
+       lcd.clear();
+       lcd.print("Driver Ok");
+       lcd.setCursor(0,1);
+       lcd.print("stop message");
+       delay(500); 
+     }
+    }
+    else
+    {
+     /* Do nothing */
+    }               
+}
+
+
+void gps_read()
+{ 
+byte a;
+
+if(Serial.available())  
+{
+a=Serial.read();
+
+//Serial.write(a);
+
+while(gps.encode(a))   // encode gps data 
+{ 
+  gps.get_position(&lat,&lon); // get latitude and longitude
+
+  Serial.println("Position: ");
+  Serial.print("lat:");
+  Serial.println((lat*0.000001),8);
+  Serial.print("log:");
+  Serial.println((lon*0.000001),8);
+}
+}
+}

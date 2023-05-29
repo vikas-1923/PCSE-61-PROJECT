@@ -1,0 +1,54 @@
+#include <VirtualWire.h>
+
+#include<LiquidCrystal.h>
+
+
+
+char *controller;
+
+const int button = 3;
+const int MQ3sensor = 2; 
+int buttonState1 = 0;
+int b=0;
+int fsr=8;
+int p=0;
+void setup() 
+{
+  // put your setup code here, to run once:
+Serial.begin(9600);
+pinMode(MQ3sensor, INPUT);
+pinMode(button, INPUT);
+pinMode(13,OUTPUT);
+vw_set_ptt_inverted(true); //
+vw_set_tx_pin(12);
+vw_setup(4000);// speed of data transfer Kbps
+delay(100);
+    
+}
+void loop()
+{
+   buttonState1 = digitalRead(MQ3sensor);
+   b= digitalRead(button);
+   p=digitalRead(fsr);
+   
+
+   Serial.println(controller);
+   
+  if (buttonState1 == LOW  && p==HIGH)
+{
+ 
+controller="1" ; 
+vw_send((uint8_t *)controller, strlen(controller));
+vw_wait_tx(); // Wait until the whole message is gone
+digitalWrite(13,LOW);
+ 
+
+}
+ else
+ {
+ controller="0" ;
+vw_send((uint8_t *)controller, strlen(controller));
+vw_wait_tx(); // Wait until the whole message is gone
+digitalWrite(13, HIGH);
+ }
+}
